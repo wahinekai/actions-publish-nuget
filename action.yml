@@ -1,0 +1,82 @@
+# publish-nuget.yml
+name: Build, Test, and Publish NuGet
+description: Build, test, package, and publish NuGet package based on project & solution including NuGet Feed as input
+
+inputs:
+  nuget-feed-url:
+    description: "NuGet Feed to publish to, defaults to https://${{ github.repository_owner }}/index.json"
+    required: false
+    default: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+
+  nuget-feed-name:
+    description: "Name of NuGet feed, defaults to github"
+    required: false
+    default: github
+
+  test:
+    description: "Flag indicating whether to test the solution before packaging"
+    required: false
+    default: false
+
+  config:
+    description: "Build configuration to use, defaults to Release"
+    required: false
+    default: Release
+
+  version-prefix:
+    description: "Version prefix to apply to this package.  Final version is ${{ version-prefix }}.${{ github.run_number }}"
+    required: true
+
+  project-path:
+    description: "Path to the project to package. Used in dotnet pack"
+    required: true
+
+  solution-path:
+    description: "Path to the solution to restore, test, and build. Used indotnet restore, build, and test. Defaults to ${{ inputs.project-path }}"
+    required: false
+    default: ${{ inputs.project-path }}
+
+  nuget-feed-password:
+    description: "Password for NuGet Feed authentication & api key for pushing. Defaults to ${{ secrets.PACKAGES_TOKEN }}"
+    required: false
+    default: ${{ secrets.PACKAGES_TOKEN }}
+
+  nuget-feed-user:
+    description: "Username for NuGet Feed authentication. Defaults to ${{ github.repository_owner }}."
+    required: false
+    default: ${{ github.repository_owner }}
+
+runs:
+  using: "composite"
+
+  env:
+    VERSION: ${{ version-prefix}}.${{ github.run_number }}
+
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: "5.0"
+
+    - name: Add Custom NuGet Feed to .NET
+      run: dotnet nuget add source ${{ inputs.nuget-feed-url }} -n ${{ inputs.nuget-feed-name }} -u ${{ inputs.nuget-feed-user }} -p ${{ inputs.nuget-feed-password }} --store-password-in-clear-text
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ inputs.solution-path }}
+
+    - name: Build
+      run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ env.VERSION }} --configuration ${{ inputs.config }} -o out
+
+    - name: Test
+      if: ${{ input.test == true }}
+      run: dotnet test ${{ inputs.solution-path }} --no-build --configuration ${{ inputs.config }} /p:OutputPath=../out
+
+    - name: Package
+      run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ env.VERSION }} /p:OutputPath=../out -o packages
+
+    - name: NuGet Push
+      run: |
+        dotnet nuget push packages/*.nupkg --source ${{ inputs.nuget-feed-url }} --skip-duplicate --api-key ${{ inputs.nuget-feed-password }}
