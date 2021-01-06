@@ -45,6 +45,10 @@ inputs:
     description: "Username for NuGet Feed authentication. Defaults to ${{ github.repository_owner }}."
     required: false
     default: ${{ github.repository_owner }}
+  output-path:
+    description: "Path for outputs to be published to. Defaults to ${{ github.workspace }}/out"
+    required: false
+    default: ${{ github.workspace }}/out
 
 runs:
   using: "composite"
@@ -68,14 +72,14 @@ runs:
       run: dotnet restore ${{ inputs.solution-path }}
 
     - name: Build
-      run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ env.VERSION }} --configuration ${{ inputs.config }} -o out
+      run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ env.VERSION }} --configuration ${{ inputs.config }} -o ${{ inputs.output-path }}
 
     - name: Test
       if: ${{ input.test == true }}
-      run: dotnet test ${{ inputs.solution-path }} --no-build --configuration ${{ inputs.config }} /p:OutputPath=../out
+      run: dotnet test ${{ inputs.solution-path }} --no-build --configuration ${{ inputs.config }} /p:OutputPath=${{ inputs.output-path }}
 
     - name: Package
-      run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ env.VERSION }} /p:OutputPath=../out -o packages
+      run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ env.VERSION }} /p:OutputPath=${{ inputs.output-path }} -o packages
 
     - name: NuGet Push
       run: |
