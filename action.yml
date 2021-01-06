@@ -23,8 +23,8 @@ inputs:
     required: false
     default: Release
 
-  version-prefix:
-    description: "Version prefix to apply to this package.  Final version is {{ version-prefix }}.{{ github.run_number }}"
+  version:
+    description: "Version for this package"
     required: true
 
   project-path:
@@ -50,9 +50,6 @@ inputs:
     default: ${{ github.workspace }}/out
 
 runs:
-  env:
-    VERSION: ${{ inputs.version-prefix }}.${{ github.run_number }}
-
   using: "composite"
   steps:
     - name: Checkout Code
@@ -70,14 +67,14 @@ runs:
       run: dotnet restore ${{ inputs.solution-path }}
 
     - name: Build
-      run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ env.VERSION }} --configuration ${{ inputs.config }} -o ${{ inputs.output-path }}
+      run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ inputs.version }} --configuration ${{ inputs.config }} -o ${{ inputs.output-path }}
 
     - name: Test
       if: ${{ input.test == true }}
       run: dotnet test ${{ inputs.solution-path }} --no-build --configuration ${{ inputs.config }} /p:OutputPath=${{ inputs.output-path }}
 
     - name: Package
-      run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ env.VERSION }} /p:OutputPath=${{ inputs.output-path }} -o packages
+      run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ inputs.version }} /p:OutputPath=${{ inputs.output-path }} -o packages
 
     - name: NuGet Push
       run: |
