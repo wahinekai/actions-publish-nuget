@@ -4,7 +4,7 @@ description: Build, test, package, and publish NuGet package based on project & 
 
 inputs:
   nuget-feed-url:
-    description: "NuGet Feed to publish to, defaults to https://${{ github.repository_owner }}/index.json"
+    description: "NuGet Feed to publish to, defaults to https://{{ github.repository_owner }}/index.json"
     required: false
     default: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
@@ -24,7 +24,7 @@ inputs:
     default: Release
 
   version-prefix:
-    description: "Version prefix to apply to this package.  Final version is ${{ version-prefix }}.${{ github.run_number }}"
+    description: "Version prefix to apply to this package.  Final version is {{ version-prefix }}.{{ github.run_number }}"
     required: true
 
   project-path:
@@ -32,21 +32,20 @@ inputs:
     required: true
 
   solution-path:
-    description: "Path to the solution to restore, test, and build. Used indotnet restore, build, and test. Defaults to ${{ inputs.project-path }}"
-    required: false
-    default: ${{ inputs.project-path }}
+    description: "Path to the solution to restore, test, and build. Used indotnet restore, build, and test."
+    required: true
 
   nuget-feed-password:
-    description: "Password for NuGet Feed authentication & api key for pushing. Defaults to ${{ secrets.PACKAGES_TOKEN }}"
+    description: "Password for NuGet Feed authentication & api key for pushing. Defaults to {{ secrets.PACKAGES_TOKEN }}"
     required: false
     default: ${{ secrets.PACKAGES_TOKEN }}
 
   nuget-feed-user:
-    description: "Username for NuGet Feed authentication. Defaults to ${{ github.repository_owner }}."
+    description: "Username for NuGet Feed authentication. Defaults to {{ github.repository_owner }}."
     required: false
     default: ${{ github.repository_owner }}
   output-path:
-    description: "Path for outputs to be published to. Defaults to ${{ github.workspace }}/out"
+    description: "Path for outputs to be published to. Defaults to {{ github.workspace }}/out"
     required: false
     default: ${{ github.workspace }}/out
 
