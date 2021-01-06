@@ -36,25 +36,24 @@ inputs:
     required: true
 
   nuget-feed-password:
-    description: "Password for NuGet Feed authentication & api key for pushing. Defaults to {{ secrets.PACKAGES_TOKEN }}"
-    required: false
-    default: ${{ secrets.PACKAGES_TOKEN }}
+    description: "Password for NuGet Feed authentication & api key for pushing."
+    required: true
 
   nuget-feed-user:
     description: "Username for NuGet Feed authentication. Defaults to {{ github.repository_owner }}."
     required: false
     default: ${{ github.repository_owner }}
+
   output-path:
     description: "Path for outputs to be published to. Defaults to {{ github.workspace }}/out"
     required: false
     default: ${{ github.workspace }}/out
 
 runs:
-  using: "composite"
-
   env:
-    VERSION: ${{ version-prefix}}.${{ github.run_number }}
+    VERSION: ${{ inputs.version-prefix }}.${{ github.run_number }}
 
+  using: "composite"
   steps:
     - name: Checkout Code
       uses: actions/checkout@v2
