@@ -52,30 +52,28 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout Code
-      uses: actions/checkout@v2
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: "5.0"
-
     - name: Add Custom NuGet Feed to .NET
       run: dotnet nuget add source ${{ inputs.nuget-feed-url }} -n ${{ inputs.nuget-feed-name }} -u ${{ inputs.nuget-feed-user }} -p ${{ inputs.nuget-feed-password }} --store-password-in-clear-text
+      shell: bash
 
     - name: Restore dependencies
       run: dotnet restore ${{ inputs.solution-path }}
+      shell: bash
 
     - name: Build
       run: dotnet build ${{ inputs.solution-path }} --no-restore /p:VersionPrefix=${{ inputs.version }} --configuration ${{ inputs.config }} -o ${{ inputs.output-path }}
+      shell: bash
 
     - name: Test
       if: ${{ input.test == true }}
       run: dotnet test ${{ inputs.solution-path }} --no-build --configuration ${{ inputs.config }} /p:OutputPath=${{ inputs.output-path }}
+      shell: bash
 
     - name: Package
       run: dotnet pack ${{ inputs.project-path }} --no-build --configuration ${{ inputs.config }} /p:Version=${{ inputs.version }} /p:OutputPath=${{ inputs.output-path }} -o packages
+      shell: bash
 
     - name: NuGet Push
       run: |
         dotnet nuget push packages/*.nupkg --source ${{ inputs.nuget-feed-url }} --skip-duplicate --api-key ${{ inputs.nuget-feed-password }}
+      shell: bash
